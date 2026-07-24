@@ -290,7 +290,9 @@ class _GardenSummary extends StatelessWidget {
           ),
           Text(
             '${store.placedItems.length} placed',
-            style: const TextStyle(color: Colors.black54),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),

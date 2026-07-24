@@ -28,8 +28,8 @@ class StatCard extends StatelessWidget {
             ),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.black54,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
                 fontSize: 12,
               ),

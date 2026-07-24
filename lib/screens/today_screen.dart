@@ -54,8 +54,8 @@ class TodayScreen extends StatelessWidget {
                     children: [
                       Text(
                         '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}',
-                        style: const TextStyle(
-                          color: forest,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -123,8 +123,8 @@ class TodayScreen extends StatelessWidget {
                 const Spacer(),
                 Text(
                   '${store.todayDone} of ${habits.length}',
-                  style: const TextStyle(
-                    color: forest,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
 import '../models.dart';
-import '../theme/cozy_theme.dart';
 
 class BackgroundCard extends StatelessWidget {
   const BackgroundCard({
@@ -50,19 +49,26 @@ class BackgroundCard extends StatelessWidget {
                     background.description,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 7),
                   if (owned)
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.check_circle, size: 16, color: forest),
-                        SizedBox(width: 5),
+                        Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 5),
                         Expanded(
                           child: Text(
                             'Owned · choose in Garden editor',
                             style: TextStyle(
-                              color: forest,
+                              color: Theme.of(context).colorScheme.primary,
                               fontSize: 11,
                               fontWeight: FontWeight.w800,
                             ),
@@ -78,7 +84,12 @@ class BackgroundCard extends StatelessWidget {
                         onPressed: canBuy ? () => _buy(context) : null,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
-                          backgroundColor: forest,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
                         ),
                         child: Text('💧 ${background.cost}'),
                       ),

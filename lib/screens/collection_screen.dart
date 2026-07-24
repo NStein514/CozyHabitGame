@@ -35,12 +35,14 @@ class CollectionScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.only(top: 8, bottom: 18),
+              padding: const EdgeInsets.only(top: 8, bottom: 18),
               child: Text(
                 'Spend dew earned from your daily habits to welcome something new.',
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ),
@@ -53,9 +55,11 @@ class CollectionScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: 5),
-                const Text(
+                Text(
                   'Collect new settings, then choose one while editing your garden.',
-                  style: TextStyle(color: Colors.black54),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(

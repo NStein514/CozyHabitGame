@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
 import '../models.dart';
-import '../theme/cozy_theme.dart';
 
 class CatalogCard extends StatelessWidget {
   const CatalogCard({super.key, required this.item, required this.store});
@@ -57,17 +56,20 @@ class CatalogCard extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.info_outline,
                     size: 15,
-                    color: Colors.black38,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ],
               ),
             ),
             Text(
               item.kind,
-              style: const TextStyle(color: Colors.black45, fontSize: 12),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 6),
             if (owned)
@@ -75,8 +77,8 @@ class CatalogCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 5),
                 child: Text(
                   'Owned ×$quantity',
-                  style: const TextStyle(
-                    color: forest,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
                   ),
@@ -88,7 +90,8 @@ class CatalogCard extends StatelessWidget {
                 onPressed: canBuy ? () => _purchase(context) : null,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 9),
-                  backgroundColor: forest,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 ),
                 child: Text('${owned ? 'Buy another · ' : ''}💧 ${item.cost}'),
               ),
