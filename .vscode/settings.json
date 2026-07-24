@@ -1,0 +1,9 @@
+{
+  "dart.flutterSdkPath": "C:\\Users\\nstei\\flutter\\flutter",
+  "dart.openDevTools": "flutter",
+  "dart.devToolsBrowser": "default",
+  "dart.flutterWidgetPreview": "startEagerly",
+  "dart.flutterWidgetPreviewLocation": "sidebar",
+  "dart.previewFlutterUiGuides": true,
+  "dart.previewFlutterUiGuidesCustomTracking": true
+}
