@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-const cream = Color(0xFFFFF9EE);
+const cream = Color(0xFFF1E8D7);
+const lightSurface = Color(0xFFFAF4E7);
 const ink = Color(0xFF25352E);
 const forest = Color(0xFF356859);
 const sage = Color(0xFF7EA68B);
@@ -8,14 +9,20 @@ const peach = Color(0xFFF2AE86);
 const butter = Color(0xFFF6D98B);
 
 ThemeData buildCozyTheme() {
-  final base = ThemeData(useMaterial3: true);
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: forest,
+        brightness: Brightness.light,
+        surface: lightSurface,
+      ).copyWith(
+        onSurface: ink,
+        onSurfaceVariant: const Color(0xFF536159),
+        outlineVariant: const Color(0xFFB7B9A9),
+      );
+  final base = ThemeData(useMaterial3: true, colorScheme: scheme);
   return base.copyWith(
     scaffoldBackgroundColor: cream,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: forest,
-      brightness: Brightness.light,
-      surface: cream,
-    ),
+    colorScheme: scheme,
     textTheme: base.textTheme
         .apply(bodyColor: ink, displayColor: ink)
         .copyWith(
@@ -38,12 +45,12 @@ ThemeData buildCozyTheme() {
         ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: Colors.white.withValues(alpha: .76),
+      color: lightSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: const Color(0xFFFFFBF2),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(18),
         borderSide: BorderSide.none,

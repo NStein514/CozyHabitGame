@@ -11,6 +11,7 @@ class CatalogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     final quantity = store.quantityOwned(item.name);
     final owned = quantity > 0;
     final canBuy = store.dew >= item.cost;
@@ -27,8 +28,8 @@ class CatalogCard extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: owned
-                      ? const Color(0xFFDDEBDD)
-                      : const Color(0xFFFFF1D6),
+                      ? scheme.primaryContainer
+                      : scheme.secondaryContainer,
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: item.assetPath == null

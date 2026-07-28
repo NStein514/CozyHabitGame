@@ -13,6 +13,8 @@ class CollectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final backgrounds = gardenBackgroundsByDewCost();
+    final shopItems = gardenCatalogByDewCost();
     return PagePadding(
       child: CustomScrollView(
         slivers: [
@@ -66,10 +68,10 @@ class CollectionScreen extends StatelessWidget {
                   height: 236,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    itemCount: gardenBackgrounds.length,
+                    itemCount: backgrounds.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 12),
                     itemBuilder: (context, index) => BackgroundCard(
-                      background: gardenBackgrounds[index],
+                      background: backgrounds[index],
                       store: store,
                     ),
                   ),
@@ -83,16 +85,21 @@ class CollectionScreen extends StatelessWidget {
               ],
             ),
           ),
-          SliverGrid.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: .77,
-            ),
-            itemCount: gardenCatalog.length,
-            itemBuilder: (context, index) =>
-                CatalogCard(item: gardenCatalog[index], store: store),
+          SliverLayoutBuilder(
+            builder: (context, constraints) {
+              final oneColumn = constraints.crossAxisExtent < 360;
+              return SliverGrid.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: oneColumn ? 1 : 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  mainAxisExtent: oneColumn ? 300 : 278,
+                ),
+                itemCount: shopItems.length,
+                itemBuilder: (context, index) =>
+                    CatalogCard(item: shopItems[index], store: store),
+              );
+            },
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 28)),
         ],

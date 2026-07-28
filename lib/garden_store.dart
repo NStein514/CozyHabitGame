@@ -61,6 +61,9 @@ class GardenStore extends ChangeNotifier {
   String get gardenerName => settings.gardenerName.trim().isEmpty
       ? 'Gardener'
       : settings.gardenerName.trim();
+  String get gardenName => settings.gardenName.trim().isEmpty
+      ? 'My cozy garden'
+      : settings.gardenName.trim();
   Set<String> get ownedItems => inventory.entries
       .where((entry) => entry.value > 0)
       .map((entry) => entry.key)
@@ -283,7 +286,7 @@ class GardenStore extends ChangeNotifier {
     return true;
   }
 
-  bool placeItem(String itemName, {double x = .5, double y = .66}) {
+  bool placeItem(String itemName, {double x = .5, double y = .52}) {
     if (availableCount(itemName) <= 0) return false;
     placedItems.add(
       PlacedGardenItem(
@@ -352,11 +355,15 @@ class GardenStore extends ChangeNotifier {
 
   void updateSettings({
     String? name,
+    String? gardenName,
     bool? gentleReminders,
     bool? soundEnabled,
     bool? darkMode,
   }) {
     if (name != null) settings.gardenerName = name.trim();
+    if (gardenName != null && gardenName.trim().isNotEmpty) {
+      settings.gardenName = gardenName.trim();
+    }
     if (gentleReminders != null) settings.gentleReminders = gentleReminders;
     if (soundEnabled != null) settings.soundEnabled = soundEnabled;
     if (darkMode != null) settings.darkMode = darkMode;

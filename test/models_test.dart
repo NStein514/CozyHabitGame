@@ -68,4 +68,16 @@ void main() {
       expect(habit.completionRate(DateTime(2026, 7, 22), days: 7), .5);
     });
   });
+
+  test('shop catalogs are ordered by Dew cost', () {
+    final itemCosts = gardenCatalogByDewCost()
+        .map((item) => item.cost)
+        .toList();
+    final backgroundCosts = gardenBackgroundsByDewCost()
+        .map((background) => background.cost)
+        .toList();
+
+    expect(itemCosts, orderedEquals([...itemCosts]..sort()));
+    expect(backgroundCosts, orderedEquals([...backgroundCosts]..sort()));
+  });
 }

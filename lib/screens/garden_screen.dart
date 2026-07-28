@@ -19,6 +19,7 @@ class GardenScreen extends StatefulWidget {
 class _GardenScreenState extends State<GardenScreen> {
   bool editing = false;
   bool editorTrayOpen = true;
+  String? selectedPlacementId;
 
   GardenStore get store => widget.store;
 
@@ -27,31 +28,44 @@ class _GardenScreenState extends State<GardenScreen> {
     return Column(
       children: [
         PagePadding(
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionEyebrow('Your little haven'),
-                    Text(
-                      'The garden',
-                      style: Theme.of(context).textTheme.headlineLarge,
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SectionEyebrow('Your little haven'),
+                        Text(
+                          store.gardenName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.headlineLarge,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  const SizedBox(width: 10),
+                  DewPill(value: store.dew),
+                ],
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  key: const Key('garden-editor-toggle'),
+                  onPressed: () => setState(() {
+                    editing = !editing;
+                    editorTrayOpen = editing;
+                    selectedPlacementId = null;
+                  }),
+                  icon: Icon(
+                    editing ? Icons.check_rounded : Icons.edit_rounded,
+                  ),
+                  label: Text(editing ? 'Done' : 'Edit garden'),
                 ),
               ),
-              TextButton.icon(
-                key: const Key('garden-editor-toggle'),
-                onPressed: () => setState(() {
-                  editing = !editing;
-                  editorTrayOpen = editing;
-                }),
-                icon: Icon(editing ? Icons.check_rounded : Icons.edit_rounded),
-                label: Text(editing ? 'Done' : 'Edit garden'),
-              ),
-              const SizedBox(width: 4),
-              DewPill(value: store.dew),
             ],
           ),
         ),
@@ -65,8 +79,10 @@ class _GardenScreenState extends State<GardenScreen> {
                   level: store.level,
                   backgroundAsset: store.selectedBackground.assetPath,
                   editing: editing,
+                  selectedPlacementId: selectedPlacementId,
+                  onSelectionChanged: (id) =>
+                      setState(() => selectedPlacementId = id),
                   onTransform: store.transformPlacedItem,
-                  onRemove: store.removePlacedItem,
                 ),
               ),
               if (editing && editorTrayOpen)
@@ -76,6 +92,10 @@ class _GardenScreenState extends State<GardenScreen> {
                   bottom: 0,
                   child: _GardenEditorTray(
                     store: store,
+                    selectedPlacement: _selectedPlacement,
+                    onPlace: _placeAndSelect,
+                    onRemoveSelected: _removeSelected,
+                    onRename: _renameGarden,
                     onHide: () => setState(() => editorTrayOpen = false),
                   ),
                 ),
@@ -96,24 +116,117 @@ class _GardenScreenState extends State<GardenScreen> {
       ],
     );
   }
+
+  PlacedGardenItem? get _selectedPlacement {
+    final id = selectedPlacementId;
+    if (id == null) return null;
+    for (final placement in store.placedItems) {
+      if (placement.id == id) return placement;
+    }
+    return null;
+  }
+
+  void _placeAndSelect(GardenItem item) {
+    if (!store.placeItem(item.name)) return;
+    setState(() => selectedPlacementId = store.placedItems.last.id);
+  }
+
+  void _removeSelected() {
+    final id = selectedPlacementId;
+    if (id == null) return;
+    store.removePlacedItem(id);
+    setState(() => selectedPlacementId = null);
+  }
+
+  Future<void> _renameGarden() async {
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) => _RenameGardenDialog(initialName: store.gardenName),
+    );
+    if (value != null) store.updateSettings(gardenName: value);
+  }
+}
+
+class _RenameGardenDialog extends StatefulWidget {
+  const _RenameGardenDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_RenameGardenDialog> createState() => _RenameGardenDialogState();
+}
+
+class _RenameGardenDialogState extends State<_RenameGardenDialog> {
+  late final TextEditingController controller = TextEditingController(
+    text: widget.initialName,
+  );
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Name your garden'),
+    content: TextField(
+      key: const Key('garden-name-field'),
+      controller: controller,
+      autofocus: true,
+      maxLength: 32,
+      textCapitalization: TextCapitalization.words,
+      decoration: const InputDecoration(
+        labelText: 'Garden name',
+        hintText: 'My cozy garden',
+      ),
+      onSubmitted: _save,
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        key: const Key('save-garden-name'),
+        onPressed: () => _save(controller.text),
+        child: const Text('Save'),
+      ),
+    ],
+  );
+
+  void _save(String value) {
+    if (value.trim().isNotEmpty) Navigator.pop(context, value);
+  }
 }
 
 class _GardenEditorTray extends StatelessWidget {
-  const _GardenEditorTray({required this.store, required this.onHide});
+  const _GardenEditorTray({
+    required this.store,
+    required this.selectedPlacement,
+    required this.onPlace,
+    required this.onRemoveSelected,
+    required this.onRename,
+    required this.onHide,
+  });
 
   final GardenStore store;
+  final PlacedGardenItem? selectedPlacement;
+  final ValueChanged<GardenItem> onPlace;
+  final VoidCallback onRemoveSelected;
+  final VoidCallback onRename;
   final VoidCallback onHide;
 
   @override
   Widget build(BuildContext context) {
-    final owned = gardenCatalog
+    final owned = gardenCatalogByDewCost()
         .where((item) => store.quantityOwned(item.name) > 0)
         .toList();
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 14),
       decoration: BoxDecoration(
-        color: const Color(0xF7FFF9EE),
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: .97),
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
           BoxShadow(
@@ -128,11 +241,21 @@ class _GardenEditorTray extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Garden editor',
-                  style: TextStyle(fontWeight: FontWeight.w900, color: forest),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
+              ),
+              IconButton(
+                key: const Key('rename-garden'),
+                tooltip: 'Rename garden',
+                onPressed: onRename,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.drive_file_rename_outline_rounded),
               ),
               IconButton(
                 tooltip: 'Hide editor tray',
@@ -142,43 +265,50 @@ class _GardenEditorTray extends StatelessWidget {
               ),
             ],
           ),
-          Row(
-            children: [
-              const Text(
-                'Garden background',
-                style: TextStyle(fontWeight: FontWeight.w800, color: forest),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: SizedBox(
-                  height: 34,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: gardenBackgrounds
-                        .where((bg) => store.ownedBackgrounds.contains(bg.id))
-                        .length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 6),
-                    itemBuilder: (context, index) {
-                      final backgrounds = gardenBackgrounds
-                          .where((bg) => store.ownedBackgrounds.contains(bg.id))
-                          .toList();
-                      final background = backgrounds[index];
-                      return ChoiceChip(
-                        label: Text(background.name),
-                        selected: store.selectedBackgroundId == background.id,
-                        onSelected: (_) =>
-                            store.selectBackground(background.id),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
+          if (selectedPlacement != null) ...[
+            _SelectedItemControls(
+              placement: selectedPlacement!,
+              store: store,
+              onRemove: onRemoveSelected,
+            ),
+            const SizedBox(height: 8),
+          ],
+          Text(
+            'Garden background',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            height: 34,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: gardenBackgrounds
+                  .where((bg) => store.ownedBackgrounds.contains(bg.id))
+                  .length,
+              separatorBuilder: (_, _) => const SizedBox(width: 6),
+              itemBuilder: (context, index) {
+                final backgrounds = gardenBackgrounds
+                    .where((bg) => store.ownedBackgrounds.contains(bg.id))
+                    .toList();
+                final background = backgrounds[index];
+                return ChoiceChip(
+                  label: Text(background.name),
+                  selected: store.selectedBackgroundId == background.id,
+                  onSelected: (_) => store.selectBackground(background.id),
+                );
+              },
+            ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Inventory · tap to place',
-            style: TextStyle(fontWeight: FontWeight.w800, color: forest),
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: 7),
           SizedBox(
@@ -198,16 +328,16 @@ class _GardenEditorTray extends StatelessWidget {
                             : 'All copies are placed',
                         child: InkWell(
                           key: Key('place-${item.name}'),
-                          onTap: available > 0
-                              ? () => store.placeItem(item.name)
-                              : null,
+                          onTap: available > 0 ? () => onPlace(item) : null,
                           borderRadius: BorderRadius.circular(16),
                           child: Container(
                             width: 67,
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: available > 0
-                                  ? const Color(0xFFFFF8E9)
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest
                                   : Colors.black.withValues(alpha: .05),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
@@ -256,6 +386,105 @@ class _GardenEditorTray extends StatelessWidget {
                       );
                     },
                   ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectedItemControls extends StatelessWidget {
+  const _SelectedItemControls({
+    required this.placement,
+    required this.store,
+    required this.onRemove,
+  });
+
+  final PlacedGardenItem placement;
+  final GardenStore store;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      key: const Key('selected-item-controls'),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: scheme.primary.withValues(alpha: .10),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.primary.withValues(alpha: .28)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle_rounded, size: 18, color: scheme.primary),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  placement.itemName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Wrap(
+              spacing: 2,
+              runSpacing: 0,
+              children: [
+                IconButton(
+                  tooltip: 'Rotate left',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => store.transformPlacedItem(
+                    placement.id,
+                    rotation: placement.rotation - .261799,
+                  ),
+                  icon: const Icon(Icons.rotate_left_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Rotate right',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => store.transformPlacedItem(
+                    placement.id,
+                    rotation: placement.rotation + .261799,
+                  ),
+                  icon: const Icon(Icons.rotate_right_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Make smaller',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => store.transformPlacedItem(
+                    placement.id,
+                    scale: placement.scale - .15,
+                  ),
+                  icon: const Icon(Icons.remove_circle_outline_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Make larger',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => store.transformPlacedItem(
+                    placement.id,
+                    scale: placement.scale + .15,
+                  ),
+                  icon: const Icon(Icons.add_circle_outline_rounded),
+                ),
+                IconButton(
+                  tooltip: 'Return to inventory',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.inventory_2_outlined),
+                ),
+              ],
+            ),
           ),
         ],
       ),

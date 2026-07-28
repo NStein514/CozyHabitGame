@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -177,20 +175,26 @@ class _WeeklyChart extends StatelessWidget {
             return Column(
               children: [
                 Container(
+                  key: Key('weekly-track-${dayKey(day)}'),
                   width: 24,
                   height: 74,
-                  alignment: Alignment.bottomCenter,
+                  padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     color: const Color(0xFFE7EFE8),
                     borderRadius: BorderRadius.circular(99),
                   ),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 500),
-                    width: 24,
-                    height: math.max(8, 74 * ratio),
-                    decoration: BoxDecoration(
-                      color: isToday ? peach : sage,
-                      borderRadius: BorderRadius.circular(99),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: AnimatedFractionallySizedBox(
+                        key: Key('weekly-fill-${dayKey(day)}'),
+                        duration: const Duration(milliseconds: 500),
+                        widthFactor: 1,
+                        heightFactor: ratio.clamp(0.0, 1.0),
+                        alignment: Alignment.bottomCenter,
+                        child: ColoredBox(color: isToday ? peach : sage),
+                      ),
                     ),
                   ),
                 ),

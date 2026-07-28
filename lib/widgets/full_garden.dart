@@ -12,23 +12,36 @@ typedef GardenTransformCallback =
       double? rotation,
     });
 
-class FullGarden extends StatelessWidget {
+class FullGarden extends StatefulWidget {
   const FullGarden({
     super.key,
     required this.placements,
     required this.level,
     required this.backgroundAsset,
     this.editing = false,
+    this.selectedPlacementId,
+    this.onSelectionChanged,
     this.onTransform,
-    this.onRemove,
   });
 
   final List<PlacedGardenItem> placements;
   final int level;
   final String backgroundAsset;
   final bool editing;
+  final String? selectedPlacementId;
+  final ValueChanged<String?>? onSelectionChanged;
   final GardenTransformCallback? onTransform;
-  final ValueChanged<String>? onRemove;
+
+  @override
+  State<FullGarden> createState() => _FullGardenState();
+}
+
+class _FullGardenState extends State<FullGarden> {
+  Offset _startFocalPoint = Offset.zero;
+  double _startX = 0;
+  double _startY = 0;
+  double _startScale = 1;
+  double _startRotation = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -48,275 +61,222 @@ class FullGarden extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
-        builder: (context, constraints) => Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                backgroundAsset,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.medium,
+        builder: (context, constraints) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.editing
+              ? () => widget.onSelectionChanged?.call(null)
+              : null,
+          onScaleStart: widget.editing && _selectedPlacement != null
+              ? _startTransform
+              : null,
+          onScaleUpdate: widget.editing && _selectedPlacement != null
+              ? (details) => _updateTransform(details, constraints.biggest)
+              : null,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  widget.backgroundAsset,
+                  fit: BoxFit.cover,
+                  filterQuality: FilterQuality.medium,
+                ),
               ),
-            ),
-            for (final placement in placements)
-              _GardenCollectible(
-                key: ValueKey(placement.id),
-                placement: placement,
-                gardenSize: constraints.biggest,
-                editing: editing,
-                onTransform: onTransform,
-                onRemove: onRemove,
-              ),
-            Positioned(
-              top: 18,
-              left: 18,
-              child: GardenLevelBadge(level: level),
-            ),
-            if (editing)
-              const Positioned(top: 18, right: 18, child: _EditingBadge()),
-            if (placements.isEmpty)
+              for (final placement in widget.placements)
+                _GardenCollectible(
+                  key: ValueKey(placement.id),
+                  placement: placement,
+                  gardenSize: constraints.biggest,
+                  editing: widget.editing,
+                  selected: widget.selectedPlacementId == placement.id,
+                  onSelect: () => widget.onSelectionChanged?.call(placement.id),
+                ),
               Positioned(
-                left: 24,
-                right: 24,
-                bottom: 22,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 11,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xEFFFFFF5),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Text(
-                    editing
-                        ? 'Choose something from your inventory below to place it.'
-                        : 'Your garden is ready. Tap Edit garden to make it yours.',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: forest,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
+                top: 18,
+                left: 18,
+                child: GardenLevelBadge(level: widget.level),
+              ),
+              if (widget.editing)
+                Positioned(
+                  top: 18,
+                  right: 18,
+                  child: _EditingBadge(compact: constraints.maxWidth < 440),
+                ),
+              if (widget.placements.isEmpty)
+                Positioned(
+                  left: 24,
+                  right: 24,
+                  bottom: 22,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xEFFFFFF5),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      widget.editing
+                          ? 'Choose something from your inventory below to place it.'
+                          : 'Your garden is ready. Tap Edit garden to make it yours.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: forest,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
+
+  PlacedGardenItem? get _selectedPlacement {
+    final id = widget.selectedPlacementId;
+    if (id == null) return null;
+    for (final placement in widget.placements) {
+      if (placement.id == id) return placement;
+    }
+    return null;
+  }
+
+  void _startTransform(ScaleStartDetails details) {
+    final placement = _selectedPlacement;
+    if (placement == null) return;
+    _startFocalPoint = details.focalPoint;
+    _startX = placement.x;
+    _startY = placement.y;
+    _startScale = placement.scale;
+    _startRotation = placement.rotation;
+  }
+
+  void _updateTransform(ScaleUpdateDetails details, Size gardenSize) {
+    final placement = _selectedPlacement;
+    if (placement == null) return;
+    final delta = details.focalPoint - _startFocalPoint;
+    widget.onTransform?.call(
+      placement.id,
+      x: _startX + delta.dx / gardenSize.width,
+      y: _startY + delta.dy / gardenSize.height,
+      scale: _startScale * details.scale,
+      rotation: _startRotation + details.rotation,
+    );
+  }
 }
 
-class _GardenCollectible extends StatefulWidget {
+class _GardenCollectible extends StatelessWidget {
   const _GardenCollectible({
     super.key,
     required this.placement,
     required this.gardenSize,
     required this.editing,
-    this.onTransform,
-    this.onRemove,
+    required this.selected,
+    required this.onSelect,
   });
 
   final PlacedGardenItem placement;
   final Size gardenSize;
   final bool editing;
-  final GardenTransformCallback? onTransform;
-  final ValueChanged<String>? onRemove;
-
-  @override
-  State<_GardenCollectible> createState() => _GardenCollectibleState();
-}
-
-class _GardenCollectibleState extends State<_GardenCollectible> {
-  Offset _startFocalPoint = Offset.zero;
-  double _startX = 0;
-  double _startY = 0;
-  double _startScale = 1;
-  double _startRotation = 0;
+  final bool selected;
+  final VoidCallback onSelect;
 
   @override
   Widget build(BuildContext context) {
     final item = gardenCatalog.firstWhere(
-      (candidate) => candidate.name == widget.placement.itemName,
+      (candidate) => candidate.name == placement.itemName,
     );
     final baseFraction = switch (item.name) {
       'Cherry tree' => .34,
       'Cozy cottage' => .31,
-      'Bird bath' => .25,
+      'Bird bath' || 'Acorn bench' => .25,
       'Red fox' || 'Sleepy cat' => .24,
-      'Little snail' || 'Blue butterfly' => .17,
+      'Little snail' || 'Blue butterfly' || 'Garden wind chime' => .17,
       _ => .22,
     };
-    final width =
-        widget.gardenSize.width * baseFraction * widget.placement.scale;
+    final width = gardenSize.width * baseFraction * placement.scale;
     final height = item.name == 'Cherry tree' ? width * 1.22 : width;
     return Positioned(
-      left: widget.gardenSize.width * widget.placement.x - width / 2,
-      top: widget.gardenSize.height * widget.placement.y - height * .86,
+      left: gardenSize.width * placement.x - width / 2,
+      top: gardenSize.height * placement.y - height * .86,
       width: width,
       height: height,
       child: GestureDetector(
-        onScaleStart: widget.editing ? _startTransform : null,
-        onScaleUpdate: widget.editing
-            ? (details) {
-                final delta = details.focalPoint - _startFocalPoint;
-                widget.onTransform?.call(
-                  widget.placement.id,
-                  x: _startX + delta.dx / widget.gardenSize.width,
-                  y: _startY + delta.dy / widget.gardenSize.height,
-                  scale: _startScale * details.scale,
-                  rotation: _startRotation + details.rotation,
-                );
-              }
-            : null,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: widget.editing
-                    ? BoxDecoration(
-                        color: Colors.white.withValues(alpha: .18),
-                        border: Border.all(color: Colors.white70, width: 1.5),
-                        borderRadius: BorderRadius.circular(18),
-                      )
-                    : const BoxDecoration(),
-                child: Transform.rotate(
-                  angle: widget.placement.rotation,
-                  child: Semantics(
-                    label: item.name,
-                    image: true,
-                    child: item.assetPath == null
-                        ? FittedBox(child: Text(item.emoji))
-                        : Image.asset(
-                            item.assetPath!,
-                            fit: BoxFit.contain,
-                            alignment: Alignment.bottomCenter,
-                            filterQuality: FilterQuality.medium,
-                          ),
-                  ),
-                ),
-              ),
-            ),
-            if (widget.editing)
-              Positioned(
-                top: -8,
-                right: -8,
-                child: Semantics(
-                  button: true,
-                  label: 'Return ${item.name} to inventory',
-                  child: InkWell(
-                    onTap: () => widget.onRemove?.call(widget.placement.id),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 25,
-                      height: 25,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFEF8ED),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(color: Colors.black26, blurRadius: 5),
-                        ],
-                      ),
-                      child: const Icon(Icons.close, size: 16, color: forest),
+        behavior: HitTestBehavior.translucent,
+        onTap: editing ? onSelect : null,
+        child: Transform.rotate(
+          angle: placement.rotation,
+          child: AnimatedContainer(
+            key: Key('garden-item-${placement.id}'),
+            duration: const Duration(milliseconds: 160),
+            padding: EdgeInsets.all(selected ? 3 : 0),
+            decoration: selected
+                ? BoxDecoration(
+                    color: Colors.white.withValues(alpha: .18),
+                    border: Border.all(
+                      color: const Color(0xFFFFE6A7),
+                      width: 3,
                     ),
-                  ),
-                ),
-              ),
-            if (widget.editing)
-              Positioned(
-                left: -8,
-                bottom: -8,
-                child: _TransformButton(
-                  tooltip: 'Rotate ${item.name}',
-                  icon: Icons.rotate_right_rounded,
-                  onTap: () => widget.onTransform?.call(
-                    widget.placement.id,
-                    rotation: widget.placement.rotation + .261799,
-                  ),
-                ),
-              ),
-            if (widget.editing)
-              Positioned(
-                right: -8,
-                bottom: -8,
-                child: _TransformButton(
-                  tooltip: 'Resize ${item.name}',
-                  icon: Icons.aspect_ratio_rounded,
-                  onTap: () => widget.onTransform?.call(
-                    widget.placement.id,
-                    scale: widget.placement.scale >= 1.7
-                        ? .6
-                        : widget.placement.scale + .15,
-                  ),
-                ),
-              ),
-          ],
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x80356859),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  )
+                : const BoxDecoration(),
+            child: Semantics(
+              label: item.name,
+              image: true,
+              selected: selected,
+              child: item.assetPath == null
+                  ? FittedBox(child: Text(item.emoji))
+                  : Image.asset(
+                      item.assetPath!,
+                      fit: BoxFit.contain,
+                      alignment: Alignment.bottomCenter,
+                      filterQuality: FilterQuality.medium,
+                    ),
+            ),
+          ),
         ),
       ),
     );
   }
-
-  void _startTransform(ScaleStartDetails details) {
-    _startFocalPoint = details.focalPoint;
-    _startX = widget.placement.x;
-    _startY = widget.placement.y;
-    _startScale = widget.placement.scale;
-    _startRotation = widget.placement.rotation;
-  }
-}
-
-class _TransformButton extends StatelessWidget {
-  const _TransformButton({
-    required this.tooltip,
-    required this.icon,
-    required this.onTap,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Tooltip(
-    message: tooltip,
-    child: Material(
-      color: const Color(0xFFFEF8ED),
-      shape: const CircleBorder(),
-      elevation: 3,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 27,
-          height: 27,
-          child: Icon(icon, size: 16, color: forest),
-        ),
-      ),
-    ),
-  );
 }
 
 class _EditingBadge extends StatelessWidget {
-  const _EditingBadge();
+  const _EditingBadge({required this.compact});
+
+  final bool compact;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-    decoration: BoxDecoration(
-      color: const Color(0xEFFFFFF5),
-      borderRadius: BorderRadius.circular(99),
-    ),
-    child: const Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.open_with_rounded, size: 15, color: forest),
-        SizedBox(width: 5),
-        Text(
-          'Drag · pinch · rotate',
-          style: TextStyle(color: forest, fontWeight: FontWeight.w800),
-        ),
-      ],
+  Widget build(BuildContext context) => Tooltip(
+    message: 'Select an item, then drag or pinch anywhere',
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xEFFFFFF5),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.touch_app_outlined, size: 15, color: forest),
+          if (!compact) ...[
+            const SizedBox(width: 5),
+            const Text(
+              'Select · drag or pinch anywhere',
+              style: TextStyle(color: forest, fontWeight: FontWeight.w800),
+            ),
+          ],
+        ],
+      ),
     ),
   );
 }

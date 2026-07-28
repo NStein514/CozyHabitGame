@@ -135,6 +135,7 @@ class Habit {
 class GardenSettings {
   GardenSettings({
     this.gardenerName = '',
+    this.gardenName = 'My cozy garden',
     this.onboardingComplete = false,
     this.gentleReminders = true,
     this.soundEnabled = true,
@@ -142,6 +143,7 @@ class GardenSettings {
   });
 
   String gardenerName;
+  String gardenName;
   bool onboardingComplete;
   bool gentleReminders;
   bool soundEnabled;
@@ -149,6 +151,7 @@ class GardenSettings {
 
   Map<String, dynamic> toJson() => {
     'gardenerName': gardenerName,
+    'gardenName': gardenName,
     'onboardingComplete': onboardingComplete,
     'gentleReminders': gentleReminders,
     'soundEnabled': soundEnabled,
@@ -157,6 +160,7 @@ class GardenSettings {
 
   factory GardenSettings.fromJson(Map<String, dynamic>? json) => GardenSettings(
     gardenerName: json?['gardenerName'] as String? ?? '',
+    gardenName: json?['gardenName'] as String? ?? 'My cozy garden',
     onboardingComplete: json?['onboardingComplete'] as bool? ?? false,
     gentleReminders: json?['gentleReminders'] as bool? ?? true,
     soundEnabled: json?['soundEnabled'] as bool? ?? true,
@@ -408,4 +412,37 @@ const gardenBackgrounds = <GardenBackground>[
     description: 'Golden leaves and warm light for an everlasting fall day.',
     assetPath: 'assets/images/garden/autumn_garden.png',
   ),
+  GardenBackground(
+    id: 'mushroom_grove',
+    name: 'Mushroom Grove',
+    cost: 260,
+    description: 'A firefly-lit woodland clearing beneath a lavender moon.',
+    assetPath: 'assets/images/garden/mushroom_grove.png',
+  ),
+  GardenBackground(
+    id: 'clover_coast',
+    name: 'Clover Coast',
+    cost: 300,
+    description: 'A bright, breezy garden perched above a turquoise sea.',
+    assetPath: 'assets/images/garden/clover_coast.png',
+  ),
+  GardenBackground(
+    id: 'celestial_glasshouse',
+    name: 'Celestial Glasshouse',
+    cost: 360,
+    description: 'A starlit conservatory with moonlight under glass.',
+    assetPath: 'assets/images/garden/celestial_glasshouse.png',
+  ),
 ];
+
+List<GardenItem> gardenCatalogByDewCost() => [...gardenCatalog]
+  ..sort((a, b) {
+    final byCost = a.cost.compareTo(b.cost);
+    return byCost != 0 ? byCost : a.name.compareTo(b.name);
+  });
+
+List<GardenBackground> gardenBackgroundsByDewCost() =>
+    [...gardenBackgrounds]..sort((a, b) {
+      final byCost = a.cost.compareTo(b.cost);
+      return byCost != 0 ? byCost : a.name.compareTo(b.name);
+    });

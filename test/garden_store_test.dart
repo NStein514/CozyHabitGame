@@ -128,6 +128,15 @@ void main() {
     );
   });
 
+  test('garden name is normalized and persisted', () {
+    store.updateSettings(gardenName: '  Moonbeam Haven  ');
+    expect(store.gardenName, 'Moonbeam Haven');
+    expect(
+      (store.toJson()['settings'] as Map<String, dynamic>)['gardenName'],
+      'Moonbeam Haven',
+    );
+  });
+
   test('loads and migrates legacy persisted state', () async {
     SharedPreferences.setMockInitialValues({
       GardenStore.legacyStorageKey: jsonEncode({

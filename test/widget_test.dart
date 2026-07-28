@@ -65,6 +65,23 @@ void main() {
 
     await tester.tap(find.text('Journey').last);
     await tester.pumpAndSettle();
+    final tracks = find.byWidgetPredicate(
+      (widget) =>
+          widget.key is ValueKey<String> &&
+          ((widget.key! as ValueKey<String>).value).startsWith('weekly-track-'),
+    );
+    final fills = find.byWidgetPredicate(
+      (widget) =>
+          widget.key is ValueKey<String> &&
+          ((widget.key! as ValueKey<String>).value).startsWith('weekly-fill-'),
+    );
+    expect(tracks, findsNWidgets(7));
+    expect(fills, findsNWidgets(7));
+    final trackRect = tester.getRect(tracks.first);
+    final fillRect = tester.getRect(fills.first);
+    expect(fillRect.left, closeTo(trackRect.left + 3, .1));
+    expect(fillRect.right, closeTo(trackRect.right - 3, .1));
+    expect(fillRect.bottom, closeTo(trackRect.bottom - 3, .1));
     await tester.tap(find.text('History'));
     await tester.pumpAndSettle();
     expect(find.text('Care history'), findsOneWidget);
