@@ -110,6 +110,7 @@ class HabitTile extends StatelessWidget {
                     if (value == 'edit') onEdit?.call();
                     if (value == 'undo') store.decrementHabit(habit);
                     if (value == 'archive') store.archiveHabit(habit);
+                    if (value == 'delete') _deleteHabit(context);
                   },
                   itemBuilder: (context) => [
                     const PopupMenuItem(
@@ -124,6 +125,10 @@ class HabitTile extends StatelessWidget {
                     const PopupMenuItem(
                       value: 'archive',
                       child: Text('Archive habit'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Text('Delete habit'),
                     ),
                   ],
                 ),
@@ -162,6 +167,29 @@ class HabitTile extends StatelessWidget {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _deleteHabit(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this habit?'),
+        content: Text(
+          '“${habit.name}” and its history will be permanently deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete habit'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) store.deleteHabit(habit);
   }
 
   Future<bool> _confirmArchive(BuildContext context) async {

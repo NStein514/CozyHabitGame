@@ -46,6 +46,11 @@ Future<void> showHabitEditor(
                 style: TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 20),
+              const Text(
+                'Habit name',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: nameController,
                 autofocus: habit == null,
@@ -53,7 +58,6 @@ Future<void> showHabitEditor(
                 maxLength: 60,
                 onChanged: (_) => setSheetState(() {}),
                 decoration: InputDecoration(
-                  labelText: 'Habit name',
                   hintText: 'Read for 10 minutes',
                   errorText:
                       showValidation && nameController.text.trim().isEmpty

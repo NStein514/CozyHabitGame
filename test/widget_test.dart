@@ -42,6 +42,7 @@ void main() {
     await tester.tap(find.byKey(const Key('habit-target-increase')));
     await tester.pump();
     expect(find.text('2'), findsOneWidget);
+    await tester.ensureVisible(find.text('Plant this habit'));
     await tester.tap(find.text('Plant this habit'));
     await tester.pumpAndSettle();
 
@@ -50,6 +51,10 @@ void main() {
     await tester.longPress(find.text('Stretch'));
     await tester.pumpAndSettle();
     expect(find.text('Tend your habit'), findsOneWidget);
+    expect(
+      tester.getBottomLeft(find.text('Habit name')).dy,
+      lessThan(tester.getTopLeft(find.byType(TextField).first).dy),
+    );
   });
 
   testWidgets('navigates through discovery, journey, history, and settings', (
@@ -106,5 +111,50 @@ void main() {
     expect(store.settings.darkMode, isTrue);
     final context = tester.element(find.text('Settings').first);
     expect(Theme.of(context).brightness, Brightness.dark);
+  });
+  testWidgets('habit deletion can be cancelled or confirmed', (tester) async {
+    final store = buildStore();
+    await tester.pumpWidget(CozyGardenApp(store: store));
+    await tester.pumpAndSettle();
+    final habit = store.todayHabits.first;
+    await tester.tap(find.byTooltip('Habit options').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete habit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(store.habits, contains(habit));
+    await tester.tap(find.byTooltip('Habit options').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete habit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete habit'));
+    await tester.pumpAndSettle();
+    expect(store.habits, isNot(contains(habit)));
+  });
+
+  testWidgets('gentle reminder setting applies to Today and Journey', (
+    tester,
+  ) async {
+    final store = buildStore();
+    await tester.pumpWidget(CozyGardenApp(store: store));
+    await tester.pumpAndSettle();
+    expect(find.text('Start with the easiest one'), findsOneWidget);
+    store.updateSettings(gentleReminders: false);
+    await tester.pumpAndSettle();
+    expect(find.text('Start with the easiest one'), findsNothing);
+    await tester.tap(find.text('Journey').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Tiny reminders'), findsNothing);
+    expect(find.text('Rest is part of growing'), findsNothing);
+    store.updateSettings(gentleReminders: true);
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('Tiny reminders'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Tiny reminders'), findsOneWidget);
+    expect(find.text('Rest is part of growing'), findsOneWidget);
   });
 }

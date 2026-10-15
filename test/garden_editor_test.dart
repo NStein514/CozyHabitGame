@@ -39,7 +39,8 @@ void main() {
     await tester.tap(find.byKey(const Key('place-Mossy stone')));
     await tester.pump();
     expect(store.placedItems, hasLength(1));
-    expect(find.byKey(const Key('selected-item-controls')), findsOneWidget);
+    expect(find.byKey(const Key('selected-item-controls')), findsNothing);
+    expect(find.byKey(const Key('garden-trash')), findsOneWidget);
     expect(find.byTooltip('Rotate Mossy stone'), findsNothing);
     final placedPosition = (
       store.placedItems.single.x,
@@ -100,8 +101,27 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('Mossy stone'));
     await tester.pump();
-    expect(find.byKey(const Key('selected-item-controls')), findsOneWidget);
-    await tester.tap(find.byTooltip('Return to inventory'));
+    expect(find.byKey(const Key('selected-item-controls')), findsNothing);
+    expect(find.byKey(const Key('garden-trash')), findsOneWidget);
+    await tester.tap(find.byTooltip('Hide editor tray'));
+    await tester.pump();
+    final item = find.bySemanticsLabel('Mossy stone');
+    final image = find.descendant(of: item, matching: find.byType(Image));
+    final selectedSize = tester.getSize(image);
+    await tester.tapAt(tester.getTopLeft(canvas) + const Offset(30, 70));
+    await tester.pumpAndSettle();
+    expect(tester.getSize(image), selectedSize);
+    await tester.tap(item);
+    await tester.pumpAndSettle();
+    expect(tester.getSize(image), selectedSize);
+    final gesture = await tester.startGesture(tester.getCenter(item));
+    await gesture.moveBy(const Offset(0, -20));
+    await tester.pump();
+    await gesture.moveTo(
+      tester.getCenter(find.byKey(const Key('garden-trash'))),
+    );
+    await tester.pump();
+    await gesture.up();
     await tester.pump();
     expect(store.placedItems, isEmpty);
     expect(store.availableCount('Mossy stone'), 1);
@@ -133,7 +153,8 @@ void main() {
     await tester.tap(find.byKey(const Key('place-Mossy stone')));
     await tester.pump();
 
-    expect(find.byKey(const Key('selected-item-controls')), findsOneWidget);
+    expect(find.byKey(const Key('selected-item-controls')), findsNothing);
+    expect(find.byKey(const Key('garden-trash')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

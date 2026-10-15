@@ -62,7 +62,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: PageView(
                 controller: _controller,
                 onPageChanged: (value) => setState(() => _page = value),
-                children: pages,
+                children: pages
+                    .map(
+                      (page) => LayoutBuilder(
+                        builder: (context, constraints) =>
+                            SingleChildScrollView(
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  child: page,
+                                ),
+                              ),
+                            ),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
             Row(

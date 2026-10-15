@@ -22,6 +22,7 @@ class FullGarden extends StatefulWidget {
     this.selectedPlacementId,
     this.onSelectionChanged,
     this.onTransform,
+    this.onRemoveSelected,
   });
 
   final List<PlacedGardenItem> placements;
@@ -31,12 +32,16 @@ class FullGarden extends StatefulWidget {
   final String? selectedPlacementId;
   final ValueChanged<String?>? onSelectionChanged;
   final GardenTransformCallback? onTransform;
+  final VoidCallback? onRemoveSelected;
 
   @override
   State<FullGarden> createState() => _FullGardenState();
 }
 
 class _FullGardenState extends State<FullGarden> {
+  final _trashKey = GlobalKey();
+  bool _overTrash = false;
+
   Offset _startFocalPoint = Offset.zero;
   double _startX = 0;
   double _startY = 0;
@@ -72,6 +77,12 @@ class _FullGardenState extends State<FullGarden> {
           onScaleUpdate: widget.editing && _selectedPlacement != null
               ? (details) => _updateTransform(details, constraints.biggest)
               : null,
+          onScaleEnd: widget.editing && _selectedPlacement != null
+              ? (_) {
+                  if (_overTrash) widget.onRemoveSelected?.call();
+                  setState(() => _overTrash = false);
+                }
+              : null,
           child: Stack(
             children: [
               Positioned.fill(
@@ -100,6 +111,39 @@ class _FullGardenState extends State<FullGarden> {
                   top: 18,
                   right: 18,
                   child: _EditingBadge(compact: constraints.maxWidth < 440),
+                ),
+              if (widget.editing && _selectedPlacement != null)
+                Positioned(
+                  top: 64,
+                  right: 18,
+                  child: Tooltip(
+                    message: 'Drag here to return to inventory',
+                    child: Semantics(
+                      label: 'Return selected decoration to inventory',
+                      button: true,
+                      onTap: widget.onRemoveSelected,
+                      child: Container(
+                        key: _trashKey,
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: _overTrash
+                              ? Theme.of(context).colorScheme.errorContainer
+                              : const Color(0xEFFFFFF5),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _overTrash ? Colors.red : forest,
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          key: const Key('garden-trash'),
+                          color: _overTrash ? Colors.red : forest,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               if (widget.placements.isEmpty)
                 Positioned(
@@ -157,6 +201,14 @@ class _FullGardenState extends State<FullGarden> {
   void _updateTransform(ScaleUpdateDetails details, Size gardenSize) {
     final placement = _selectedPlacement;
     if (placement == null) return;
+    final trash = _trashKey.currentContext?.findRenderObject() as RenderBox?;
+    final overTrash =
+        details.pointerCount == 1 &&
+        trash != null &&
+        (Offset.zero & trash.size).contains(
+          trash.globalToLocal(details.focalPoint),
+        );
+    if (overTrash != _overTrash) setState(() => _overTrash = overTrash);
     final delta = details.focalPoint - _startFocalPoint;
     widget.onTransform?.call(
       placement.id,
@@ -212,8 +264,7 @@ class _GardenCollectible extends StatelessWidget {
           child: AnimatedContainer(
             key: Key('garden-item-${placement.id}'),
             duration: const Duration(milliseconds: 160),
-            padding: EdgeInsets.all(selected ? 3 : 0),
-            decoration: selected
+            foregroundDecoration: selected
                 ? BoxDecoration(
                     color: Colors.white.withValues(alpha: .18),
                     border: Border.all(

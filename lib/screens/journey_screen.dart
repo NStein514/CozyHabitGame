@@ -70,24 +70,26 @@ class JourneyScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _WeeklyChart(store: store, days: days),
-          const SizedBox(height: 22),
-          Text(
-            'Tiny reminders',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 10),
-          const Card(
-            child: ListTile(
-              leading: Text('🍃', style: TextStyle(fontSize: 29)),
-              title: Text(
-                'Rest is part of growing',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              subtitle: Text(
-                'Missing a day never erases the care you gave before.',
+          if (store.settings.gentleReminders) ...[
+            const SizedBox(height: 22),
+            Text(
+              'Tiny reminders',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: 10),
+            const Card(
+              child: ListTile(
+                leading: Text('🍃', style: TextStyle(fontSize: 29)),
+                title: Text(
+                  'Rest is part of growing',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+                subtitle: Text(
+                  'Missing a day never erases the care you gave before.',
+                ),
               ),
             ),
-          ),
+          ],
           const SizedBox(height: 30),
         ],
       ),

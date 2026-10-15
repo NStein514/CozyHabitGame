@@ -83,6 +83,7 @@ class _GardenScreenState extends State<GardenScreen> {
                   onSelectionChanged: (id) =>
                       setState(() => selectedPlacementId = id),
                   onTransform: store.transformPlacedItem,
+                  onRemoveSelected: _removeSelected,
                 ),
               ),
               if (editing && editorTrayOpen)
@@ -92,9 +93,7 @@ class _GardenScreenState extends State<GardenScreen> {
                   bottom: 0,
                   child: _GardenEditorTray(
                     store: store,
-                    selectedPlacement: _selectedPlacement,
                     onPlace: _placeAndSelect,
-                    onRemoveSelected: _removeSelected,
                     onRename: _renameGarden,
                     onHide: () => setState(() => editorTrayOpen = false),
                   ),
@@ -115,15 +114,6 @@ class _GardenScreenState extends State<GardenScreen> {
         _GardenSummary(store: store, editing: editing),
       ],
     );
-  }
-
-  PlacedGardenItem? get _selectedPlacement {
-    final id = selectedPlacementId;
-    if (id == null) return null;
-    for (final placement in store.placedItems) {
-      if (placement.id == id) return placement;
-    }
-    return null;
   }
 
   void _placeAndSelect(GardenItem item) {
@@ -203,17 +193,13 @@ class _RenameGardenDialogState extends State<_RenameGardenDialog> {
 class _GardenEditorTray extends StatelessWidget {
   const _GardenEditorTray({
     required this.store,
-    required this.selectedPlacement,
     required this.onPlace,
-    required this.onRemoveSelected,
     required this.onRename,
     required this.onHide,
   });
 
   final GardenStore store;
-  final PlacedGardenItem? selectedPlacement;
   final ValueChanged<GardenItem> onPlace;
-  final VoidCallback onRemoveSelected;
   final VoidCallback onRename;
   final VoidCallback onHide;
 
@@ -265,14 +251,6 @@ class _GardenEditorTray extends StatelessWidget {
               ),
             ],
           ),
-          if (selectedPlacement != null) ...[
-            _SelectedItemControls(
-              placement: selectedPlacement!,
-              store: store,
-              onRemove: onRemoveSelected,
-            ),
-            const SizedBox(height: 8),
-          ],
           Text(
             'Garden background',
             style: TextStyle(
@@ -386,105 +364,6 @@ class _GardenEditorTray extends StatelessWidget {
                       );
                     },
                   ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SelectedItemControls extends StatelessWidget {
-  const _SelectedItemControls({
-    required this.placement,
-    required this.store,
-    required this.onRemove,
-  });
-
-  final PlacedGardenItem placement;
-  final GardenStore store;
-  final VoidCallback onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      key: const Key('selected-item-controls'),
-      padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: .10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scheme.primary.withValues(alpha: .28)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.check_circle_rounded, size: 18, color: scheme.primary),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  placement.itemName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Wrap(
-              spacing: 2,
-              runSpacing: 0,
-              children: [
-                IconButton(
-                  tooltip: 'Rotate left',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => store.transformPlacedItem(
-                    placement.id,
-                    rotation: placement.rotation - .261799,
-                  ),
-                  icon: const Icon(Icons.rotate_left_rounded),
-                ),
-                IconButton(
-                  tooltip: 'Rotate right',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => store.transformPlacedItem(
-                    placement.id,
-                    rotation: placement.rotation + .261799,
-                  ),
-                  icon: const Icon(Icons.rotate_right_rounded),
-                ),
-                IconButton(
-                  tooltip: 'Make smaller',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => store.transformPlacedItem(
-                    placement.id,
-                    scale: placement.scale - .15,
-                  ),
-                  icon: const Icon(Icons.remove_circle_outline_rounded),
-                ),
-                IconButton(
-                  tooltip: 'Make larger',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => store.transformPlacedItem(
-                    placement.id,
-                    scale: placement.scale + .15,
-                  ),
-                  icon: const Icon(Icons.add_circle_outline_rounded),
-                ),
-                IconButton(
-                  tooltip: 'Return to inventory',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: onRemove,
-                  icon: const Icon(Icons.inventory_2_outlined),
-                ),
-              ],
-            ),
           ),
         ],
       ),
