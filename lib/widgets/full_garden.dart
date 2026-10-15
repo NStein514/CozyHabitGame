@@ -23,6 +23,7 @@ class FullGarden extends StatefulWidget {
     this.onSelectionChanged,
     this.onTransform,
     this.onRemoveSelected,
+    this.onOpenInventory,
   });
 
   final List<PlacedGardenItem> placements;
@@ -33,6 +34,7 @@ class FullGarden extends StatefulWidget {
   final ValueChanged<String?>? onSelectionChanged;
   final GardenTransformCallback? onTransform;
   final VoidCallback? onRemoveSelected;
+  final VoidCallback? onOpenInventory;
 
   @override
   State<FullGarden> createState() => _FullGardenState();
@@ -102,16 +104,38 @@ class _FullGardenState extends State<FullGarden> {
                   onSelect: () => widget.onSelectionChanged?.call(placement.id),
                 ),
               Positioned(
-                top: 18,
-                left: 18,
-                child: GardenLevelBadge(level: widget.level),
-              ),
-              if (widget.editing)
-                Positioned(
-                  top: 18,
-                  right: 18,
-                  child: _EditingBadge(compact: constraints.maxWidth < 440),
+                top: 12,
+                left: 12,
+                right: 12,
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: GardenLevelBadge(level: widget.level),
+                      ),
+                    ),
+                    if (widget.editing) ...[
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: FilledButton(
+                          key: const Key('garden-inventory'),
+                          onPressed: widget.onOpenInventory,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text('Inventory'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const _EditingBadge(compact: true),
+                    ],
+                  ],
                 ),
+              ),
               if (widget.editing && _selectedPlacement != null)
                 Positioned(
                   top: 64,

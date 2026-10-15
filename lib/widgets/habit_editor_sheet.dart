@@ -36,9 +36,20 @@ Future<void> showHabitEditor(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                habit == null ? 'Plant a new habit' : 'Tend your habit',
-                style: Theme.of(context).textTheme.headlineSmall,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      habit == null ? 'Plant a new habit' : 'Tend your habit',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Close without saving',
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               const Text(
@@ -53,6 +64,8 @@ Future<void> showHabitEditor(
               const SizedBox(height: 8),
               TextField(
                 controller: nameController,
+                onTapOutside: (_) =>
+                    FocusManager.instance.primaryFocus?.unfocus(),
                 autofocus: habit == null,
                 textCapitalization: TextCapitalization.sentences,
                 maxLength: 60,
@@ -157,17 +170,17 @@ Future<void> showHabitEditor(
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (index) {
-                  final weekday = index + 1;
+                  final weekday = const [7, 1, 2, 3, 4, 5, 6][index];
                   final selected = days.contains(weekday);
                   return Semantics(
                     label: const [
+                      'Sunday',
                       'Monday',
                       'Tuesday',
                       'Wednesday',
                       'Thursday',
                       'Friday',
                       'Saturday',
-                      'Sunday',
                     ][index],
                     selected: selected,
                     child: InkWell(
@@ -185,7 +198,7 @@ Future<void> showHabitEditor(
                           color: selected ? forest : const Color(0xFFE9EDE8),
                         ),
                         child: Text(
-                          const ['M', 'T', 'W', 'T', 'F', 'S', 'S'][index],
+                          const ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'][index],
                           style: TextStyle(
                             color: selected ? Colors.white : ink,
                             fontWeight: FontWeight.w800,

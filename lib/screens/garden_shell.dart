@@ -25,7 +25,7 @@ class _GardenShellState extends State<GardenShell> {
   Widget build(BuildContext context) {
     final pages = [
       TodayScreen(store: widget.store),
-      GardenScreen(store: widget.store),
+      GardenScreen(store: widget.store, active: _selectedIndex == 1),
       CollectionScreen(store: widget.store),
       JourneyScreen(store: widget.store),
       SettingsScreen(store: widget.store),

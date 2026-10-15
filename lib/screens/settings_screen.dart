@@ -112,32 +112,12 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Future<void> _editName(BuildContext context) async {
-    final controller = TextEditingController(text: store.settings.gardenerName);
-    await showDialog<void>(
+    final name = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Your garden name'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 30,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () {
-              store.updateSettings(name: controller.text);
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (context) =>
+          _GardenerNameDialog(initialName: store.settings.gardenerName),
     );
-    controller.dispose();
+    if (name != null) store.updateSettings(name: name);
   }
 
   Future<void> _showArchived(BuildContext context) async {
@@ -226,4 +206,39 @@ class SettingsScreen extends StatelessWidget {
     );
     if (confirmed == true) await store.resetGarden();
   }
+}
+
+class _GardenerNameDialog extends StatefulWidget {
+  const _GardenerNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_GardenerNameDialog> createState() => _GardenerNameDialogState();
+}
+
+class _GardenerNameDialogState extends State<_GardenerNameDialog> {
+  late final _controller = TextEditingController(text: widget.initialName);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Your garden name'),
+    content: TextField(controller: _controller, autofocus: true, maxLength: 30),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('Cancel'),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, _controller.text),
+        child: const Text('Save'),
+      ),
+    ],
+  );
 }

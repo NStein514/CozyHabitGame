@@ -8,20 +8,53 @@ import '../widgets/common_widgets.dart';
 import '../widgets/full_garden.dart';
 
 class GardenScreen extends StatefulWidget {
-  const GardenScreen({super.key, required this.store});
+  const GardenScreen({super.key, required this.store, this.active = true});
 
   final GardenStore store;
+  final bool active;
 
   @override
   State<GardenScreen> createState() => _GardenScreenState();
 }
 
-class _GardenScreenState extends State<GardenScreen> {
+class _GardenScreenState extends State<GardenScreen>
+    with WidgetsBindingObserver {
   bool editing = false;
   bool editorTrayOpen = true;
   String? selectedPlacementId;
 
   GardenStore get store => widget.store;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _finishEditing() {
+    editing = false;
+    editorTrayOpen = false;
+    selectedPlacementId = null;
+  }
+
+  @override
+  void didUpdateWidget(covariant GardenScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!widget.active) _finishEditing();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed && editing) {
+      setState(_finishEditing);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +89,12 @@ class _GardenScreenState extends State<GardenScreen> {
                 child: TextButton.icon(
                   key: const Key('garden-editor-toggle'),
                   onPressed: () => setState(() {
-                    editing = !editing;
-                    editorTrayOpen = editing;
-                    selectedPlacementId = null;
+                    if (editing) {
+                      _finishEditing();
+                    } else {
+                      editing = true;
+                      editorTrayOpen = true;
+                    }
                   }),
                   icon: Icon(
                     editing ? Icons.check_rounded : Icons.edit_rounded,
@@ -84,6 +120,7 @@ class _GardenScreenState extends State<GardenScreen> {
                       setState(() => selectedPlacementId = id),
                   onTransform: store.transformPlacedItem,
                   onRemoveSelected: _removeSelected,
+                  onOpenInventory: () => setState(() => editorTrayOpen = true),
                 ),
               ),
               if (editing && editorTrayOpen)
@@ -98,16 +135,6 @@ class _GardenScreenState extends State<GardenScreen> {
                     onHide: () => setState(() => editorTrayOpen = false),
                   ),
                 ),
-              if (editing && !editorTrayOpen)
-                Positioned(
-                  right: 24,
-                  bottom: 18,
-                  child: FilledButton.icon(
-                    onPressed: () => setState(() => editorTrayOpen = true),
-                    icon: const Icon(Icons.inventory_2_outlined),
-                    label: const Text('Inventory'),
-                  ),
-                ),
             ],
           ),
         ),
@@ -118,7 +145,10 @@ class _GardenScreenState extends State<GardenScreen> {
 
   void _placeAndSelect(GardenItem item) {
     if (!store.placeItem(item.name)) return;
-    setState(() => selectedPlacementId = store.placedItems.last.id);
+    setState(() {
+      selectedPlacementId = store.placedItems.last.id;
+      editorTrayOpen = false;
+    });
   }
 
   void _removeSelected() {
@@ -387,19 +417,30 @@ class _GardenSummary extends StatelessWidget {
           const Icon(CupertinoIcons.sparkles, color: Color(0xFFD99B3D)),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              editing
-                  ? 'Arrange freely — your layout stays where you leave it'
-                  : '${store.todayDone} caring moments today',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ),
-          Text(
-            '${store.placedItems.length} placed',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                children: [
+                  Text(
+                    editing
+                        ? 'Arrange freely — your layout stays where you leave it'
+                        : '${store.todayDone} caring moments today',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '${store.placedItems.length} placed',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

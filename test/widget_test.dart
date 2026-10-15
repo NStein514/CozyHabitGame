@@ -157,4 +157,36 @@ void main() {
     expect(find.text('Tiny reminders'), findsOneWidget);
     expect(find.text('Rest is part of growing'), findsOneWidget);
   });
+  for (final action in ['Save', 'Cancel']) {
+    testWidgets('gardener name dialog closes safely on $action', (
+      tester,
+    ) async {
+      final store = buildStore();
+      await tester.pumpWidget(CozyGardenApp(store: store));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Settings').last);
+      await tester.pumpAndSettle();
+      final originalName = store.settings.gardenerName;
+      await tester.tap(find.text('Garden keeper'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Robin');
+      await tester.tap(find.text(action));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(
+        store.settings.gardenerName,
+        action == 'Save' ? 'Robin' : originalName,
+      );
+      await tester.tap(find.text('Garden keeper'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        action == 'Save' ? 'Robin' : originalName,
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+  }
 }
