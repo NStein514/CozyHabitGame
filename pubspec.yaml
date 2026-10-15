@@ -61,6 +61,7 @@ flutter:
     - assets/images/garden/
     - assets/images/plants/
     - assets/images/collectibles/
+    - assets/images/navigation/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
+import '../widgets/vine_navigation_bar.dart';
 import 'collection_screen.dart';
 import 'garden_screen.dart';
 import 'journey_screen.dart';
@@ -36,13 +37,10 @@ class _GardenShellState extends State<GardenShell> {
         bottom: false,
         child: IndexedStack(index: _selectedIndex, children: pages),
       ),
-      bottomNavigationBar: NavigationBar(
-        height: 74,
+      bottomNavigationBar: VineNavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (value) =>
             setState(() => _selectedIndex = value),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        indicatorColor: Theme.of(context).colorScheme.primaryContainer,
         destinations: const [
           NavigationDestination(
             icon: Icon(CupertinoIcons.checkmark_alt_circle),
