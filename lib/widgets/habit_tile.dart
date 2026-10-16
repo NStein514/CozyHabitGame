@@ -1,3 +1,4 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -79,7 +80,7 @@ class HabitTile extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Text(
+                      GardenIllustratedText(
                         _subtitle(count),
                         style: TextStyle(
                           color: completed
@@ -163,7 +164,7 @@ class HabitTile extends StatelessWidget {
               : '${habit.countOn(store.today)} of ${habit.target} check-ins',
         ),
         behavior: SnackBarBehavior.floating,
-        backgroundColor: forest,
+        backgroundColor: lightModeFill(context),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -232,7 +233,7 @@ class _HabitEmoji extends StatelessWidget {
           : Theme.of(context).colorScheme.secondaryContainer,
       borderRadius: BorderRadius.circular(16),
     ),
-    child: Text(emoji, style: const TextStyle(fontSize: 25)),
+    child: GardenIcon(emoji, size: 25),
   );
 }
 
@@ -278,7 +279,7 @@ class _CountBadge extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
     decoration: BoxDecoration(
       color: completed
-          ? Theme.of(context).colorScheme.primary
+          ? lightModeFill(context, Theme.of(context).colorScheme.primary)
           : Theme.of(context).colorScheme.primaryContainer,
       borderRadius: BorderRadius.circular(99),
     ),
@@ -308,7 +309,7 @@ class EmptyHabits extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Text('🪴', style: TextStyle(fontSize: 44)),
+          const GardenIcon('🪴', size: 44),
           const SizedBox(height: 8),
           const Text(
             'Your garden has room to grow',

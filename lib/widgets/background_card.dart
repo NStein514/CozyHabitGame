@@ -1,4 +1,6 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
+import '../theme/cozy_theme.dart';
 
 import '../garden_store.dart';
 import '../models.dart';
@@ -84,14 +86,15 @@ class BackgroundCard extends StatelessWidget {
                         onPressed: canBuy ? () => _buy(context) : null,
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 8),
-                          backgroundColor: Theme.of(
+                          backgroundColor: lightModeFill(
                             context,
-                          ).colorScheme.primary,
+                            Theme.of(context).colorScheme.primary,
+                          ),
                           foregroundColor: Theme.of(
                             context,
                           ).colorScheme.onPrimary,
                         ),
-                        child: Text('💧 ${background.cost}'),
+                        child: GardenIllustratedText('💧 ${background.cost}'),
                       ),
                     ),
                 ],

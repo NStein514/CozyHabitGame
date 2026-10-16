@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -22,7 +23,7 @@ class SettingsScreen extends StatelessWidget {
                 ListTile(
                   leading: const CircleAvatar(
                     backgroundColor: Color(0xFFDDEBDD),
-                    child: Text('🌿'),
+                    child: GardenIcon('🌿'),
                   ),
                   title: Text(
                     store.gardenerName,
@@ -142,10 +143,7 @@ class SettingsScreen extends StatelessWidget {
                         children: store.archivedHabits
                             .map(
                               (habit) => ListTile(
-                                leading: Text(
-                                  habit.emoji,
-                                  style: const TextStyle(fontSize: 26),
-                                ),
+                                leading: GardenIcon(habit.emoji, size: 26),
                                 title: Text(habit.name),
                                 subtitle: Text(
                                   '${habit.totalCompletions} completed days',
@@ -197,7 +195,11 @@ class SettingsScreen extends StatelessWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).brightness == Brightness.light
+                  ? Theme.of(context).colorScheme.errorContainer
+                  : Colors.red.shade700,
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Reset everything'),
           ),

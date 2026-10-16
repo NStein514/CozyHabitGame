@@ -1,3 +1,4 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
 
 class PagePadding extends StatelessWidget {
@@ -27,7 +28,7 @@ class DewPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('💧', style: TextStyle(fontSize: 17)),
+          const GardenIcon('💧', size: 17),
           const SizedBox(width: 5),
           Text(
             '$value',

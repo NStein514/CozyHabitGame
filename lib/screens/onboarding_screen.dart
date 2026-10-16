@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(56),
-                  backgroundColor: forest,
+                  backgroundColor: lightModeFill(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),
@@ -158,7 +159,7 @@ class _WelcomePage extends StatelessWidget {
             color: Color(0xFFDDEBDD),
             shape: BoxShape.circle,
           ),
-          child: Text(emoji, style: const TextStyle(fontSize: 82)),
+          child: GardenIcon(emoji, size: 82),
         ),
         const SizedBox(height: 42),
         Text(
@@ -191,7 +192,7 @@ class _NamePage extends StatelessWidget {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('🪴', style: TextStyle(fontSize: 78)),
+        const GardenIcon('🪴', size: 78),
         const SizedBox(height: 30),
         Text(
           'What should your garden call you?',

@@ -1,3 +1,4 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../models.dart';
@@ -310,7 +311,7 @@ class _GardenCollectible extends StatelessWidget {
               image: true,
               selected: selected,
               child: item.assetPath == null
-                  ? FittedBox(child: Text(item.emoji))
+                  ? FittedBox(child: GardenIcon(item.emoji, size: 48))
                   : Image.asset(
                       item.assetPath!,
                       fit: BoxFit.contain,

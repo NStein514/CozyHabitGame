@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -79,7 +80,7 @@ class JourneyScreen extends StatelessWidget {
             const SizedBox(height: 10),
             const Card(
               child: ListTile(
-                leading: Text('🍃', style: TextStyle(fontSize: 29)),
+                leading: GardenIcon('🍃', size: 29),
                 title: Text(
                   'Rest is part of growing',
                   style: TextStyle(fontWeight: FontWeight.w800),
@@ -106,14 +107,14 @@ class _LevelProgress extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: forest,
+      color: lightModeFill(context),
       borderRadius: BorderRadius.circular(28),
     ),
     child: Column(
       children: [
         Row(
           children: [
-            const Text('🌳', style: TextStyle(fontSize: 42)),
+            const GardenIcon('🌳', size: 42),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -121,15 +122,18 @@ class _LevelProgress extends StatelessWidget {
                 children: [
                   Text(
                     'Garden level ${store.level}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: lightModeText(context),
                       fontWeight: FontWeight.w800,
                       fontSize: 19,
                     ),
                   ),
                   Text(
                     '${store.xpNeeded - store.xp} care points until the next level',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(
+                      color: lightModeText(context, Colors.white70),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),

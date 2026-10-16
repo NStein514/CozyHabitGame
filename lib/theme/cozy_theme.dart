@@ -8,6 +8,14 @@ const sage = Color(0xFF7EA68B);
 const peach = Color(0xFFF2AE86);
 const butter = Color(0xFFF6D98B);
 
+Color lightModeText(BuildContext context, [Color darkColor = Colors.white]) =>
+    Theme.of(context).brightness == Brightness.light ? ink : darkColor;
+
+Color lightModeFill(BuildContext context, [Color darkColor = forest]) =>
+    Theme.of(context).brightness == Brightness.light
+    ? const Color(0xFFCDE2CF)
+    : darkColor;
+
 ThemeData buildCozyTheme() {
   final scheme =
       ColorScheme.fromSeed(
@@ -16,12 +24,34 @@ ThemeData buildCozyTheme() {
         surface: lightSurface,
       ).copyWith(
         onSurface: ink,
+        onPrimary: ink,
+        onSecondary: ink,
+        onTertiary: ink,
+        onError: ink,
         onSurfaceVariant: const Color(0xFF536159),
         outlineVariant: const Color(0xFFB7B9A9),
       );
   final base = ThemeData(useMaterial3: true, colorScheme: scheme);
   return base.copyWith(
     scaffoldBackgroundColor: cream,
+    primaryTextTheme: base.primaryTextTheme.apply(
+      bodyColor: ink,
+      displayColor: ink,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        foregroundColor: ink,
+        backgroundColor: scheme.primaryContainer,
+      ),
+    ),
+    snackBarTheme: const SnackBarThemeData(
+      backgroundColor: lightSurface,
+      contentTextStyle: TextStyle(color: ink),
+    ),
+    tooltipTheme: const TooltipThemeData(
+      decoration: BoxDecoration(color: lightSurface),
+      textStyle: TextStyle(color: ink),
+    ),
     colorScheme: scheme,
     textTheme: base.textTheme
         .apply(bodyColor: ink, displayColor: ink)
@@ -42,7 +72,8 @@ ThemeData buildCozyTheme() {
             fontWeight: FontWeight.w700,
           ),
           bodyMedium: const TextStyle(fontSize: 14, height: 1.4),
-        ),
+        )
+        .apply(bodyColor: ink, displayColor: ink),
     cardTheme: CardThemeData(
       elevation: 0,
       color: lightSurface,

@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -61,21 +62,21 @@ class HistoryScreen extends StatelessWidget {
                               ? const Color(0xFFE9EDE8)
                               : Color.lerp(
                                   const Color(0xFFCDE2CF),
-                                  forest,
+                                  lightModeFill(context),
                                   ratio,
                                 ),
                           borderRadius: BorderRadius.circular(9),
                         ),
-                        child: Text(
-                          ratio > 0 ? '♥' : '${day.day}',
-                          style: TextStyle(
-                            color: ratio > .55
-                                ? Colors.white
-                                : ink.withValues(alpha: .65),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                        child: ratio > 0
+                            ? const GardenIcon('💛', size: 18)
+                            : Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                  color: ink.withValues(alpha: .65),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                       ),
                     ),
                   );
@@ -111,7 +112,7 @@ class _HabitInsight extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Text(habit.emoji, style: const TextStyle(fontSize: 30)),
+            GardenIcon(habit.emoji, size: 30),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

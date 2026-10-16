@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -358,7 +359,12 @@ class _GardenEditorTray extends StatelessWidget {
                                   child: Opacity(
                                     opacity: available > 0 ? 1 : .35,
                                     child: item.assetPath == null
-                                        ? FittedBox(child: Text(item.emoji))
+                                        ? FittedBox(
+                                            child: GardenIcon(
+                                              item.emoji,
+                                              size: 48,
+                                            ),
+                                          )
                                         : Image.asset(
                                             item.assetPath!,
                                             fit: BoxFit.contain,
@@ -374,13 +380,13 @@ class _GardenEditorTray extends StatelessWidget {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: forest,
+                                      color: lightModeFill(context),
                                       borderRadius: BorderRadius.circular(9),
                                     ),
                                     child: Text(
                                       '$available',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: lightModeText(context),
                                         fontSize: 10,
                                         fontWeight: FontWeight.w900,
                                       ),

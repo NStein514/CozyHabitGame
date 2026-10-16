@@ -1,3 +1,4 @@
+import 'widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import 'garden_store.dart';
@@ -54,7 +55,7 @@ class _SplashScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('🌱', style: TextStyle(fontSize: 56)),
+            GardenIcon('🌱', size: 56),
             SizedBox(height: 16),
             Text('Waking up your garden…'),
           ],

@@ -1,4 +1,6 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
+import '../theme/cozy_theme.dart';
 
 import '../garden_store.dart';
 import '../models.dart';
@@ -33,7 +35,7 @@ class CatalogCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: item.assetPath == null
-                    ? Text(item.emoji, style: const TextStyle(fontSize: 48))
+                    ? GardenIcon(item.emoji, size: 48)
                     : Padding(
                         padding: const EdgeInsets.all(6),
                         child: Image.asset(
@@ -91,10 +93,15 @@ class CatalogCard extends StatelessWidget {
                 onPressed: canBuy ? () => _purchase(context) : null,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 9),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: lightModeFill(
+                    context,
+                    Theme.of(context).colorScheme.primary,
+                  ),
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 ),
-                child: Text('${owned ? 'Buy another · ' : ''}💧 ${item.cost}'),
+                child: GardenIllustratedText(
+                  '${owned ? 'Buy another · ' : ''}💧 ${item.cost}',
+                ),
               ),
             ),
           ],
@@ -107,7 +114,7 @@ class CatalogCard extends StatelessWidget {
     if (!store.buy(item)) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
+        content: GardenIllustratedText(
           '${item.emoji} ${item.name} was added to your inventory.',
         ),
         behavior: SnackBarBehavior.floating,
@@ -120,7 +127,7 @@ class CatalogCard extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         icon: item.assetPath == null
-            ? Text(item.emoji, style: const TextStyle(fontSize: 48))
+            ? GardenIcon(item.emoji, size: 48)
             : Image.asset(item.assetPath!, width: 110, height: 110),
         title: Text(item.name),
         content: Text(item.description, textAlign: TextAlign.center),

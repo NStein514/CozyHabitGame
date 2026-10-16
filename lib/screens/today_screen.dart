@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -103,7 +104,7 @@ class TodayScreen extends StatelessWidget {
                 padding: EdgeInsets.only(bottom: 16),
                 child: Card(
                   child: ListTile(
-                    leading: Text('🍃', style: TextStyle(fontSize: 27)),
+                    leading: GardenIcon('🍃', size: 27),
                     title: Text(
                       'Start with the easiest one',
                       style: TextStyle(fontWeight: FontWeight.w800),

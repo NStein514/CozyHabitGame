@@ -363,9 +363,11 @@ class VineGrowthPainter extends CustomPainter {
           1 - crown.tightness * .10 * envelope - crown.wilt * .30 * envelope;
       final drop = crown.wilt * 7 * envelope;
       final centerY = 25 + drop;
+      // Open the loops vertically while keeping their connecting strands fixed.
+      final breathingRoom = 4 * envelope;
       positions.addAll([
-        Offset(u * size.width, centerY - 25 * squeeze),
-        Offset(u * size.width, centerY + 24 * squeeze),
+        Offset(u * size.width, centerY - (25 + breathingRoom) * squeeze),
+        Offset(u * size.width, centerY + (24 + breathingRoom) * squeeze),
       ]);
       texture.addAll([
         Offset(sx, art.height * 180 / 725),

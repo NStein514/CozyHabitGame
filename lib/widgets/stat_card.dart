@@ -1,3 +1,4 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
 
 class StatCard extends StatelessWidget {
@@ -20,7 +21,7 @@ class StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 27)),
+            GardenIcon(icon, size: 27),
             const SizedBox(height: 8),
             Text(
               value,

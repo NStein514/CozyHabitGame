@@ -1,3 +1,4 @@
+import 'garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -89,10 +90,7 @@ Future<void> showHabitEditor(
                 children: ['🌱', '📖', '💧', '🧘', '👟', '🧺', '💛', '🎨']
                     .map(
                       (option) => ChoiceChip(
-                        label: Text(
-                          option,
-                          style: const TextStyle(fontSize: 20),
-                        ),
+                        label: GardenIcon(option, size: 20),
                         selected: emoji == option,
                         showCheckmark: false,
                         onSelected: (_) => setSheetState(() => emoji = option),
@@ -195,12 +193,14 @@ Future<void> showHabitEditor(
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: selected ? forest : const Color(0xFFE9EDE8),
+                          color: selected
+                              ? lightModeFill(context)
+                              : const Color(0xFFE9EDE8),
                         ),
                         child: Text(
                           const ['Su', 'M', 'Tu', 'W', 'Th', 'F', 'Sa'][index],
                           style: TextStyle(
-                            color: selected ? Colors.white : ink,
+                            color: selected ? lightModeText(context) : ink,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -246,7 +246,7 @@ Future<void> showHabitEditor(
                 },
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(54),
-                  backgroundColor: forest,
+                  backgroundColor: lightModeFill(context),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18),
                   ),

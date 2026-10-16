@@ -1,3 +1,4 @@
+import '../widgets/garden_icon.dart';
 import 'package:flutter/material.dart';
 
 import '../garden_store.dart';
@@ -82,7 +83,7 @@ class _GardenPlaygroundState extends State<GardenPlayground> {
                 children: [
                   Row(
                     children: [
-                      const Text('🧪', style: TextStyle(fontSize: 30)),
+                      const GardenIcon('🧪', size: 30),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -224,24 +225,24 @@ class _PlaygroundButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: forest,
+    color: lightModeFill(context),
     elevation: 5,
     shadowColor: forest.withValues(alpha: .35),
     borderRadius: BorderRadius.circular(99),
     child: InkWell(
       borderRadius: BorderRadius.circular(99),
       onTap: onPressed,
-      child: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('🧪', style: TextStyle(fontSize: 16)),
+            GardenIcon('🧪', size: 16),
             SizedBox(width: 6),
             Text(
               'Test',
               style: TextStyle(
-                color: Colors.white,
+                color: lightModeText(context),
                 fontWeight: FontWeight.w800,
               ),
             ),
