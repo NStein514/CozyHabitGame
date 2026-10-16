@@ -24,11 +24,26 @@ class _VineNavigationBarState extends State<VineNavigationBar>
     with SingleTickerProviderStateMixin {
   late final _growth = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 680),
+    duration: const Duration(milliseconds: 800),
   );
-  ui.Image? _runner;
-  ui.Image? _frame;
+  ui.Image? _artwork;
   bool _reducedMotion = false;
+  VineScene _from = const VineScene(extent: -.08, crowns: []);
+  double _target = .1;
+
+  VineScene get _scene => VineScene.transition(
+    _from,
+    _target,
+    _growth.value,
+    widget.destinations.length,
+  );
+
+  double get _selectedCenter {
+    final index = Directionality.of(context) == TextDirection.ltr
+        ? widget.selectedIndex
+        : widget.destinations.length - 1 - widget.selectedIndex;
+    return (index + .5) / widget.destinations.length;
+  }
 
   @override
   void initState() {
@@ -49,20 +64,14 @@ class _VineNavigationBarState extends State<VineNavigationBar>
   }
 
   Future<void> _loadArt() async {
-    final images = await Future.wait([
-      _decode('assets/images/navigation/vine_runner.png'),
-      _decode('assets/images/navigation/vine_frame.png'),
-    ]);
+    final artwork = await _decode(
+      'assets/images/navigation/vine_navigation.png',
+    );
     if (!mounted) {
-      for (final image in images) {
-        image.dispose();
-      }
+      artwork.dispose();
       return;
     }
-    setState(() {
-      _runner = images[0];
-      _frame = images[1];
-    });
+    setState(() => _artwork = artwork);
     _startGrowth();
   }
 
@@ -70,6 +79,11 @@ class _VineNavigationBarState extends State<VineNavigationBar>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _reducedMotion = MediaQuery.disableAnimationsOf(context);
+    final target = _selectedCenter;
+    if (target != _target) {
+      _from = _scene;
+      _target = target;
+    }
     if (_reducedMotion) _growth.value = 1;
   }
 
@@ -80,7 +94,9 @@ class _VineNavigationBarState extends State<VineNavigationBar>
   }
 
   void _startGrowth() {
-    if (_runner == null) return;
+    _from = _scene;
+    _target = _selectedCenter;
+    if (_artwork == null) return;
     if (_reducedMotion) {
       _growth.value = 1;
     } else {
@@ -91,8 +107,7 @@ class _VineNavigationBarState extends State<VineNavigationBar>
   @override
   void dispose() {
     _growth.dispose();
-    _runner?.dispose();
-    _frame?.dispose();
+    _artwork?.dispose();
     super.dispose();
   }
 
@@ -123,12 +138,15 @@ class _VineNavigationBarState extends State<VineNavigationBar>
                 builder: (context, _) => CustomPaint(
                   key: const Key('navigation-growing-vine'),
                   painter: VineGrowthPainter(
-                    runner: _runner,
-                    frame: _frame,
-                    progress: _growth.value,
-                    selectedIndex: widget.selectedIndex,
+                    artwork: _artwork,
+                    scene: _scene,
+                    target: _target,
+                    retreat: _from.extent > _target
+                        ? math.sin(math.pi * _growth.value)
+                        : 0,
+                    decay: _from.extent > _target ? _growth.value : 0,
+                    ashExtent: _from.extent,
                     count: widget.destinations.length,
-                    direction: Directionality.of(context),
                   ),
                 ),
               ),
@@ -140,117 +158,314 @@ class _VineNavigationBarState extends State<VineNavigationBar>
   );
 }
 
+/// A snapshot lets a new tap continue from the vine's visible position.
+@immutable
+class VineCrown {
+  const VineCrown({
+    required this.center,
+    this.growth = 1,
+    this.opacity = 1,
+    this.wilt = 0,
+    this.tightness = 0,
+  });
+  final double center;
+  final double growth;
+  final double opacity;
+  final double wilt;
+  final double tightness;
+}
+
+@immutable
+class VineScene {
+  const VineScene({required this.extent, required this.crowns});
+  final double extent;
+  final List<VineCrown> crowns;
+
+  static VineScene transition(
+    VineScene from,
+    double target,
+    double progress,
+    int count,
+  ) {
+    if (progress == 0) return from;
+    final desired = [
+      for (var i = 0; i < count; i++)
+        if ((i + .5) / count <= target + .001) (i + .5) / count,
+    ];
+    if (progress == 1) {
+      return VineScene(
+        extent: target,
+        crowns: [
+          for (final center in desired)
+            VineCrown(
+              center: center,
+              tightness: center < target - .001 ? 1 : 0,
+            ),
+        ],
+      );
+    }
+    final retreating = target < from.extent;
+    final travel = Curves.easeInOutCubic.transform(
+      (progress / .8).clamp(0.0, 1.0),
+    );
+    final extent = ui.lerpDouble(from.extent, target, travel)!;
+    final bloom = Curves.easeInOut.transform(
+      retreating
+          ? (progress / .45).clamp(0.0, 1.0)
+          : ((progress - .58) / .42).clamp(0.0, 1.0),
+    );
+    final settle = Curves.easeInOut.transform(progress);
+    final crowns = <VineCrown>[];
+    for (final center in desired) {
+      VineCrown? old;
+      for (final crown in from.crowns) {
+        if ((crown.center - center).abs() < .001) old = crown;
+      }
+      final active = (center - target).abs() < .001;
+      final reveal = active
+          ? bloom
+          : ((extent - center + .06) / .12).clamp(0.0, 1.0);
+      crowns.add(
+        VineCrown(
+          center: center,
+          growth: ui.lerpDouble(old?.growth ?? 0, 1, reveal)!,
+          opacity: ui.lerpDouble(old?.opacity ?? 1, 1, settle)!,
+          wilt: (old?.wilt ?? 0) * (1 - settle),
+          tightness: ui.lerpDouble(
+            old?.tightness ?? (active ? 0 : 1),
+            active ? 0 : 1,
+            settle,
+          )!,
+        ),
+      );
+    }
+    for (final old in from.crowns) {
+      if (old.center <= target + .001) continue;
+      final wilt = Curves.easeInOut.transform(progress);
+      final dissolve = Curves.easeIn.transform(
+        ((progress - .28) / .72).clamp(0.0, 1.0),
+      );
+      crowns.add(
+        VineCrown(
+          center: old.center,
+          growth: old.growth,
+          opacity: old.opacity * (1 - dissolve),
+          tightness: old.tightness,
+          wilt: ui.lerpDouble(old.wilt, 1, wilt)!,
+        ),
+      );
+    }
+    return VineScene(extent: extent, crowns: crowns);
+  }
+}
+
 class VineGrowthPainter extends CustomPainter {
   const VineGrowthPainter({
-    required this.runner,
-    required this.frame,
-    required this.progress,
-    required this.selectedIndex,
+    required this.artwork,
+    required this.scene,
+    required this.target,
+    required this.retreat,
     required this.count,
-    required this.direction,
+    this.decay = 0,
+    this.ashExtent = 0,
   });
-  final ui.Image? runner;
-  final ui.Image? frame;
-  final double progress;
-  final int selectedIndex;
+  final ui.Image? artwork;
+  final VineScene scene;
+  final double target;
+  final double retreat;
   final int count;
-  final TextDirection direction;
+  final double decay;
+  final double ashExtent;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (runner == null || frame == null || progress == 0) return;
-    final visualIndex = direction == TextDirection.ltr
-        ? selectedIndex
-        : count - 1 - selectedIndex;
-    final centerX = size.width * (visualIndex + .5) / count;
-    final stemProgress = Curves.easeOutCubic.transform(
-      (progress / .58).clamp(0.0, 1.0),
-    );
-    final curlProgress = Curves.easeInOut.transform(
-      ((progress - .58) / .42).clamp(0.0, 1.0),
-    );
-    final paint = Paint()..filterQuality = FilterQuality.medium;
-    final width = math.min(74.0, size.width / count - 2);
-    final joinX = centerX + width * .30;
-    // Crop only transparent margins at render time; retain the original artwork.
-    final source = Rect.fromLTWH(
-      0,
-      runner!.height * .32,
-      runner!.width.toDouble(),
-      runner!.height * .34,
-    );
+    final art = artwork;
+    if (art == null || scene.extent < 0) return;
+    final slot = size.width / count;
+    final end = math.min(size.width, scene.extent * size.width + slot * .43);
     canvas.save();
-    // Enter at the physical right edge, expanding toward the selected tab.
-    canvas.clipRect(
-      Rect.fromLTRB(
-        size.width - (size.width - joinX) * stemProgress,
-        0,
-        size.width,
-        size.height,
-      ),
-    );
-    final vertices = ui.Vertices(
-      ui.VertexMode.triangleStrip,
-      [
-        Offset(joinX, -2),
-        Offset(joinX, 22),
-        Offset(size.width + 12, 7),
-        Offset(size.width + 12, 13),
-      ],
-      textureCoordinates: [
-        source.topLeft,
-        source.bottomLeft,
-        source.topRight,
-        source.bottomRight,
-      ],
-    );
-    final branchPaint = Paint()
-      ..filterQuality = FilterQuality.medium
-      ..shader = ImageShader(
-        runner!,
-        TileMode.clamp,
-        TileMode.clamp,
-        Matrix4.identity().storage,
-      );
-    canvas.drawVertices(vertices, BlendMode.srcOver, branchPaint);
-    vertices.dispose();
-    canvas.restore();
-    if (curlProgress == 0) return;
-    final center = Offset(centerX, 25);
-    final bounds = Rect.fromCenter(center: center, width: width, height: 48);
+    canvas.clipRect(Offset.zero & size);
     canvas.save();
-    if (curlProgress < 1) {
-      final sweep = Path()
-        ..moveTo(center.dx, center.dy)
-        ..arcTo(
-          Rect.fromCircle(center: center, radius: 70),
-          -math.pi / 4,
-          -math.pi * 2 * curlProgress,
-          false,
-        )
-        ..close();
-      canvas.clipPath(sweep);
+    // Rounded, staggered shoots keep the frontier looking alive while paused.
+    // The same contour travels with growth, revealing the connected artwork.
+    final growingEdge = Path()
+      ..moveTo(0, 0)
+      ..lineTo(end - 3, 0)
+      ..lineTo(end - 3, 15)
+      ..cubicTo(end - 3, 18, end + 1, 18, end + 2, 20)
+      ..cubicTo(end + 5, 16, end + 8, 19, end + 6, 23)
+      ..cubicTo(end + 12, 21, end + 12, 28, end + 7, 28)
+      ..cubicTo(end + 8, 32, end + 3, 34, end + 1, 30)
+      ..cubicTo(end - 1, 32, end - 3, 34, end - 3, 37)
+      ..lineTo(end - 3, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    canvas.clipPath(growingEdge);
+    // One connected texture, with shared vertices at every loop/connector join.
+    // These landmarks align the five hand-painted loop centers with live icons.
+    const sourceX = [
+      0.0,
+      286.0,
+      490.0,
+      691.0,
+      900.0,
+      1107.0,
+      1320.0,
+      1533.0,
+      1740.0,
+      1959.0,
+      2170.0,
+    ];
+    final positions = <Offset>[];
+    final texture = <Offset>[];
+    final colors = <Color>[];
+    const segments = 320;
+    for (var i = 0; i <= segments; i++) {
+      final u = i / segments;
+      final cell = math.min(count - 1, (u * count).floor());
+      // Match the live Material indicator (64 x 32, radius 12), rather than
+      // scaling the branch frames proportionally with the whole navigation bar.
+      // Keep each connector anchored so the artwork remains continuous.
+      const leftEdges = [130.0, 565.0, 980.0, 1405.0, 1810.0];
+      const rightEdges = [440.0, 815.0, 1230.0, 1660.0, 2100.0];
+      final localX = u * count - cell;
+      final halfFrame = math.min(32.0, slot * .48) / slot;
+      final knots = [0.0, .5 - halfFrame, .5, .5 + halfFrame, 1.0];
+      final sourceKnots = [
+        sourceX[cell * 2],
+        leftEdges[cell],
+        sourceX[cell * 2 + 1],
+        rightEdges[cell],
+        sourceX[cell * 2 + 2],
+      ];
+      var span = 0;
+      while (span < 3 && localX > knots[span + 1]) {
+        span++;
+      }
+      final sx =
+          ui.lerpDouble(
+            sourceKnots[span],
+            sourceKnots[span + 1],
+            (localX - knots[span]) / (knots[span + 1] - knots[span]),
+          )! /
+          2170 *
+          art.width;
+      final center = (cell + .5) / count;
+      VineCrown crown = VineCrown(center: center);
+      for (final candidate in scene.crowns) {
+        if ((candidate.center - center).abs() < .001) crown = candidate;
+      }
+      // Pin connector endpoints to the centerline while gently constricting
+      // earlier loops. Neighboring columns share the same texture and geometry.
+      final local = u * count - cell;
+      final envelope = math.pow(math.sin(math.pi * local), 2).toDouble();
+      final squeeze =
+          1 - crown.tightness * .10 * envelope - crown.wilt * .30 * envelope;
+      final drop = crown.wilt * 7 * envelope;
+      final centerY = 25 + drop;
+      positions.addAll([
+        Offset(u * size.width, centerY - 25 * squeeze),
+        Offset(u * size.width, centerY + 24 * squeeze),
+      ]);
+      texture.addAll([
+        Offset(sx, art.height * 180 / 725),
+        Offset(sx, art.height * 470 / 725),
+      ]);
+      final tone = (255 * (1 - (crown.wilt * 3).clamp(0.0, 1.0))).round();
+      final tint = Color.fromRGBO(tone, tone, tone, crown.opacity);
+      colors.addAll([tint, tint]);
     }
-    canvas.drawImageRect(
-      frame!,
-      Rect.fromLTWH(
-        frame!.width * .015,
-        frame!.height * .10,
-        frame!.width * .97,
-        frame!.height * .74,
-      ),
-      bounds,
-      paint,
+    final mesh = ui.Vertices(
+      ui.VertexMode.triangleStrip,
+      positions,
+      textureCoordinates: texture,
+      colors: colors,
     );
+    final shader = ImageShader(
+      art,
+      TileMode.clamp,
+      TileMode.clamp,
+      Matrix4.identity().storage,
+    );
+    canvas.drawVertices(
+      mesh,
+      BlendMode.modulate,
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..shader = shader,
+    );
+    mesh.dispose();
+    shader.dispose();
     canvas.restore();
+    for (final crown in scene.crowns) {
+      if (crown.wilt <= 0) continue;
+      _paintAsh(
+        canvas,
+        Rect.fromCenter(
+          center: Offset(crown.center * size.width, 25),
+          width: slot * .70,
+          height: 38,
+        ),
+        crown.wilt,
+        crown.center,
+      );
+    }
+    if (decay > 0 && ashExtent > target) {
+      _paintAsh(
+        canvas,
+        Rect.fromLTRB(
+          (target + .1) * size.width,
+          20,
+          ashExtent * size.width,
+          30,
+        ),
+        decay,
+        target,
+      );
+    }
+    canvas.restore();
+  }
+
+  void _paintAsh(Canvas canvas, Rect bounds, double decay, double seed) {
+    // Deterministic fragments avoid flicker and remain stable across rebuilds.
+    for (var i = 0; i < 30; i++) {
+      final delay = (i % 6) * .055;
+      final age = ((decay - .12 - delay) / (1 - .12 - delay)).clamp(0.0, 1.0);
+      if (age <= 0 || age >= 1) continue;
+      final angle = i * 2.39996 + seed * 11;
+      final origin = Offset(
+        bounds.center.dx + math.cos(angle) * bounds.width / 2,
+        bounds.center.dy + math.sin(angle) * bounds.height / 2,
+      );
+      final drift = Offset(math.sin(angle * 2) * age * 15, age * 19);
+      final radius = (.65 + (i % 4) * .27) * (1 - age * .65);
+      final color = i.isEven
+          ? const Color(0xFF141513)
+          : const Color(0xFF777970);
+      canvas.save();
+      canvas.translate(origin.dx + drift.dx, origin.dy + drift.dy);
+      canvas.rotate(angle + age * 2);
+      final flake = Path()
+        ..moveTo(-radius, 0)
+        ..lineTo(0, -radius * .8)
+        ..lineTo(radius * .65, radius * .35)
+        ..lineTo(-radius * .2, radius)
+        ..close();
+      canvas.drawPath(
+        flake,
+        Paint()..color = color.withValues(alpha: math.sin(math.pi * age) * .9),
+      );
+      canvas.restore();
+    }
   }
 
   @override
   bool shouldRepaint(covariant VineGrowthPainter oldDelegate) =>
-      progress != oldDelegate.progress ||
-      selectedIndex != oldDelegate.selectedIndex ||
-      runner != oldDelegate.runner ||
-      frame != oldDelegate.frame ||
+      artwork != oldDelegate.artwork ||
+      scene != oldDelegate.scene ||
+      target != oldDelegate.target ||
+      retreat != oldDelegate.retreat ||
       count != oldDelegate.count ||
-      direction != oldDelegate.direction;
+      decay != oldDelegate.decay ||
+      ashExtent != oldDelegate.ashExtent;
 }
